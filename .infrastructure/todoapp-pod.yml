@@ -11,6 +11,9 @@ spec:
       image: langrafka/todoapp:3.0.0
       ports:
         - containerPort: 8080
+      env:
+        - name: READINESS_DELAY
+          value: "10" 
       readinessProbe:
         httpGet:
           path: /api/readiness/ # Використовуємо шлях, визначений у src/api/urls.py

@@ -1,47 +1,63 @@
-Ця інструкція показує, як розгорнути та протестувати додаток, використовуючи створені маніфести у папці .infrastructure.
+## Інструкція з валідації ToDo App у Kubernetes (Task 3)
 
-1. Застосування маніфестів
-Усі маніфести знаходяться у папці .infrastructure/. Застосовуйте їх по черзі:
+Ця інструкція показує, як розгорнути та протестувати додаток, використовуючи створені маніфести у папці `.infrastructure`.
 
-* Створити простір імен todoapp:
+### 1. Збірка та Публікація Образу (Критично)
 
-kubectl apply -f .infrastructure/namespace.yml
+Обов'язково виконайте ці команди, використовуючи ваш логін `langrafka`:
 
-* Застосувати Pod-и (ToDoApp та Busybox):
+1.  **Зібрати образ:**
+    ```bash
+    docker build . -t langrafka/todoapp:3.0.0
+    ```
+2.  **Завантажити образ на Docker Hub:**
+    ```bash
+    docker push langrafka/todoapp:3.0.0
+    ```
 
-kubectl apply -f .infrastructure/todoapp-pod.yml -n todoapp
-kubectl apply -f .infrastructure/busybox.yml -n todoapp
+### 2. Застосування маніфестів
 
-* Перевірити статус Pod-ів:
+Усі маніфести знаходяться у папці `.infrastructure/`. Застосовуйте їх по черзі:
 
-kubectl get pods -n todoapp
+1.  **Створити простір імен `todoapp`:**
+    ```bash
+    kubectl apply -f .infrastructure/namespace.yml
+    ```
+2.  **Застосувати Pod-и (ToDo App та Busybox):**
+    ```bash
+    kubectl apply -f .infrastructure/todoapp-pod.yml -n todoapp
+    ```
+3.  **Перевірити статус Pod-ів:**
+    ```bash
+    kubectl get pods -n todoapp
+    ```
 
-2. Тестування через port-forward
-Використовуйте цю команду для доступу до додатка ToDo з вашого локального комп'ютера, щоб протестувати ендпоінти перевірок здоров'я.
+### 3. Тестування через `port-forward`
 
-* Прокинути порт 8080 локально (залишити термінал відкритим):
+1.  **Прокинути порт 8080 локально (залишити термінал відкритим):**
+    ```bash
+    kubectl port-forward pod/todoapp 8080:8080 -n todoapp
+    ```
+2.  **Перевірити liveness (У новому вікні терміналу):**
+    ```bash
+    curl http://localhost:8080/api/liveness/
+    ```
+3.  **Перевірити readiness (У новому вікні терміналу):**
+    * **Важливо:** Через налаштування `READINESS_DELAY=10s` у Pod-і, ендпоінт `/api/readiness/` повертатиме **503 Not Ready** протягом перших 10 секунд після старту контейнера.
+    ```bash
+    curl http://localhost:8080/api/readiness/
+    ```
 
-kubectl port-forward pod/todoapp 8080:8080 -n todoapp
+### 4. Тестування всередині кластера через `busybox`
 
-* Перевірити liveness (У новому вікні терміналу):
-
-curl http://localhost:8080/api/liveness/
-
-* Перевірити readiness (У новому вікні терміналу):
-
-curl http://localhost:8080/api/readiness/
-
-3. Тестування всередині кластера через busyboxplus:curl
-Це демонструє, що ваш Pod здатний спілкуватися з іншими Pod-ами за допомогою внутрішнього DNS-імені.
-
-* Зайти всередину контейнера busybox:
-
-kubectl exec -it busybox -n todoapp -- /bin/sh
-
-* Всередині busybox (виконати curl до Pod'а todoapp):
-
-curl todoapp:8080/api/liveness/
-curl todoapp:8080/api/readiness/
-exit
-
-###Молодці! ^-^
+1.  **Зайти всередину контейнера busybox:**
+    ```bash
+    kubectl exec -it busybox -n todoapp -- /bin/sh
+    ```
+2.  **Всередині busybox (виконати curl до Pod-а todoapp):**
+    ```bash
+    curl todoapp:8080/api/liveness/
+    curl todoapp:8080/api/readiness/
+    exit
+    ```
+## Дякую за увагу! ^-^
