@@ -1,0 +1,47 @@
+Ця інструкція показує, як розгорнути та протестувати додаток, використовуючи створені маніфести у папці .infrastructure.
+
+1. Застосування маніфестів
+Усі маніфести знаходяться у папці .infrastructure/. Застосовуйте їх по черзі:
+
+* Створити простір імен todoapp:
+
+kubectl apply -f .infrastructure/namespace.yml
+
+* Застосувати Pod-и (ToDoApp та Busybox):
+
+kubectl apply -f .infrastructure/todoapp-pod.yml -n todoapp
+kubectl apply -f .infrastructure/busybox.yml -n todoapp
+
+* Перевірити статус Pod-ів:
+
+kubectl get pods -n todoapp
+
+2. Тестування через port-forward
+Використовуйте цю команду для доступу до додатка ToDo з вашого локального комп'ютера, щоб протестувати ендпоінти перевірок здоров'я.
+
+* Прокинути порт 8080 локально (залишити термінал відкритим):
+
+kubectl port-forward pod/todoapp 8080:8080 -n todoapp
+
+* Перевірити liveness (У новому вікні терміналу):
+
+curl http://localhost:8080/api/liveness/
+
+* Перевірити readiness (У новому вікні терміналу):
+
+curl http://localhost:8080/api/readiness/
+
+3. Тестування всередині кластера через busyboxplus:curl
+Це демонструє, що ваш Pod здатний спілкуватися з іншими Pod-ами за допомогою внутрішнього DNS-імені.
+
+* Зайти всередину контейнера busybox:
+
+kubectl exec -it busybox -n todoapp -- /bin/sh
+
+* Всередині busybox (виконати curl до Pod'а todoapp):
+
+curl todoapp:8080/api/liveness/
+curl todoapp:8080/api/readiness/
+exit
+
+###Молодці! ^-^

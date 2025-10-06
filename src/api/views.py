@@ -4,9 +4,17 @@ from rest_framework import permissions, viewsets
 from api.serializers import TodoListSerializer, TodoSerializer, UserSerializer
 from lists.models import Todo, TodoList
 
-from django.http import HttpResponse
+from django.http import HttpResponse # Імпорт вже є
 from django.utils import timezone
 import time
+import os # <<< ДОДАНО: Для отримання змінних середовища READINESS_DELAY
+
+# --- НАЛАШТУВАННЯ PROBES ---
+# Потрібно для логіки "теплого старту" Readiness Probe
+start_time = time.time()
+STARTUP_PERIOD = int(os.getenv('READINESS_DELAY', '10')) # Час у секундах, протягом якого додаток не готовий
+
+# --- ІСНУЮЧИЙ КОД З ВАШОГО ФАЙЛУ ---
 
 class IsCreatorOrReadOnly(permissions.BasePermission):
     """
@@ -56,3 +64,21 @@ class TodoViewSet(viewsets.ModelViewSet):
         user = self.request.user
         creator = user if user.is_authenticated else None
         serializer.save(creator=creator)
+
+# --- НОВІ ФУНКЦІЇ ДЛЯ KUBERNETES PROBES ---
+
+def readiness_check(request):
+    """
+    Readiness Probe: Повертає 200 (Ready), якщо пройшов час "теплого старту".
+    Інакше повертає 503 (Service Unavailable).
+    """
+    if time.time() < start_time + STARTUP_PERIOD:
+        return HttpResponse("Not ready", status=503)
+    else:
+        return HttpResponse("Ready", status=200)
+
+def liveness_check(request):
+    """
+    Liveness Probe: Проста перевірка, чи живий процес додатку.
+    """
+    return HttpResponse("Healthy", status=200)
