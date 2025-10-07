@@ -26,6 +26,7 @@
 2.  **Застосувати Pod-и (ToDo App та Busybox):**
     ```bash
     kubectl apply -f .infrastructure/todoapp-pod.yml -n todoapp
+    kubectl apply -f .infrastructure/busybox.yml -n todoapp
     ```
 3.  **Перевірити статус Pod-ів:**
     ```bash

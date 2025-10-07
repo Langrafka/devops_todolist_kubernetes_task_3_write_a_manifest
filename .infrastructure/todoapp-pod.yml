@@ -9,6 +9,7 @@ spec:
   containers:
     - name: todoapp
       image: langrafka/todoapp:3.0.0
+      imagePullPolicy: Always
       ports:
         - containerPort: 8080
       env:
@@ -18,7 +19,7 @@ spec:
         httpGet:
           path: /api/readiness/ # Використовуємо шлях, визначений у src/api/urls.py
           port: 8080
-        initialDelaySeconds: 10
+        initialDelaySeconds: 12
         periodSeconds: 5
         timeoutSeconds: 2
         failureThreshold: 3
